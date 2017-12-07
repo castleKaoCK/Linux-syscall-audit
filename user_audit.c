@@ -26,8 +26,7 @@ int main(int argc, char *argv[])
 	struct syscall_buf audit_buf[AUDIT_BUF_SIZE];
 	unsigned char reset = 1;
 	int num = 0;
-	int i, fd;
-	char ch[2] = {0};
+	int i, fd, length;
 
 	signal(SIGINT, handle_int);
 
@@ -41,16 +40,26 @@ int main(int argc, char *argv[])
 		num = syscall(325, 0, (unsigned char *)audit_buf, (u16)(sizeof(struct syscall_buf)*AUDIT_BUF_SIZE), reset);
 		printf("num:%d\n", num);
 		for(i = 0;i < num;i++){
+			char ch[4] = {0};
+
 			printf("No[%d], serial:%d\t", i, audit_buf[i].serial);
 			printf("syscall:$%d\n", audit_buf[i].syscall);
 			printf("status:%x\n", audit_buf[i].status);
 			printf("pid:%d\n", audit_buf[i].pid);
 			printf("uid:%d\n", audit_buf[i].uid);
 			printf("comm:%s\n", audit_buf[i].comm);
-		
-			ch[0] = (char)(audit_buf[i].syscall - 325 + (u32)'0');
-			ch[1] = ' ';
-			write(fd, ch, 2);
+	
+			ch[3] = ' ';
+			
+			if(audit_buf[i].syscall == 0){
+				ch[2] = (u32)'0';
+				write(fd, ch+2, 2);
+				continue;
+			}
+
+			for(length = 2;audit_buf[i].syscall > 0;length--, audit_buf[i].syscall /= 10)
+				ch[length] = audit_buf[i].syscall % 10 + (u32)'0';
+			write(fd, ch+length+1, 2-length+1);
 		}
 		if(exit_flag){
 			write(fd, '\0', 1);

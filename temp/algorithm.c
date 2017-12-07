@@ -2,8 +2,8 @@
 
 
 
-char normalSequence[SEQ_SIZE] = {0};		//正常序列
-char realTimeSequence[SEQ_SIZE] = {0};		//实时序列
+int normalSequence[SEQ_SIZE] = {0};			//正常序列
+int realTimeSequence[SEQ_SIZE] = {0};		//实时序列
 int normalLength = 0;						//正常序列长度
 int realTimeLength = 0;						//实时序列长度
 double * vcom = NULL;						//相对差异度向量
@@ -12,19 +12,29 @@ double * vden = NULL;						//差异密度向量
 
 
 
-//去除读取到的字符串中的空格和回车
-int remove_blank(char * ch)
+//将字符串转换为数字
+int ch_to_int(const char * ch, int * arr)
 {
-	int i = 0, j = 0, length = 0;
+	int i = 0, length = 0, num = -1;
 	
-	for(;i < SEQ_SIZE && ch[i] != '\0' && ch[i] != '\n';++i){
-		if(ch[i] != ' '){
-			ch[j++] = ch[i];
-			++length;
+	for(;i < SEQ_SIZE;++i)
+	{
+		if(ch[i] == ' ' || ch[i] == '\0' || ch[i] == '\n')
+		{
+			arr[length] = num != -1? num: arr[length];
+			length += num != -1? 1: 0;
+			if(ch[i] != ' ')
+				break;
+			num = -1;
+		}
+		else
+		{
+			if(num == -1)
+				num = ch[i] - '0';
+			else
+				num = num * 10 + ch[i] - '0';
 		}
 	}
-	ch[j] = '\0';
-
 	return length;
 }
 
@@ -34,8 +44,11 @@ int remove_blank(char * ch)
  */
 void init_sequence(void)
 {
+	int i;
 	int fd;
 	int rt_val;
+	char normalSequenceChar[SEQ_SIZE] = {0};		//正常序列
+	char realTimeSequenceChar[SEQ_SIZE] = {0};		//实时序列
 
 	fd = open(NORMALSEQ_FILE, O_RDONLY, 0000);
 	if(fd == -1){
@@ -43,7 +56,7 @@ void init_sequence(void)
 		exit(EXIT_FAILURE);
 	}
 
-	rt_val = read(fd, normalSequence, SEQ_SIZE);
+	rt_val = read(fd, normalSequenceChar, SEQ_SIZE);
 	if(rt_val == -1){
 		perror("read failed");
 		exit(EXIT_FAILURE);
@@ -56,15 +69,22 @@ void init_sequence(void)
 		exit(EXIT_FAILURE);
 	}
 	
-	rt_val = read(fd, realTimeSequence, SEQ_SIZE);
+	rt_val = read(fd, realTimeSequenceChar, SEQ_SIZE);
 	if(rt_val == -1){
 		perror("read failed");
 		exit(EXIT_FAILURE);
 	}
 	close(fd);
 
-	normalLength = remove_blank(normalSequence);
-	realTimeLength = remove_blank(realTimeSequence);
+	normalLength = ch_to_int(normalSequenceChar, normalSequence);
+	realTimeLength = ch_to_int(realTimeSequenceChar, realTimeSequence);
+	
+	for(i = 0;i < normalLength;i++)
+		printf("%d ", normalSequence[i]);
+	printf("\n");
+	for(i = 0;i < realTimeLength;i++)
+		printf("%d ", realTimeSequence[i]);
+	printf("\n");
 }
 
 
@@ -73,7 +93,7 @@ void init_sequence(void)
  * 	求实时序列中某一短序列与正常序列的差异度。
  *	return: 差异度。
  */
-int i_to_B (const char * a, const char * b, const int n)
+int i_to_B (const int * a, const int * b, const int n)
 {
 	int K = 1, DIFF = 0, u = 0, j = 0, min;
 	for(;j < n;++j, K = 1, DIFF = 0)
@@ -105,7 +125,7 @@ int * A_to_B(void)
 	for(i = 0;i < realTimeLength-SLIDE_WIND+1;++i){
 		diff_before[i] = i_to_B(realTimeSequence+i, normalSequence,
 			normalLength-SLIDE_WIND+1);
-		printf("%d\n", diff_before[i]);
+		printf("diff_before[%2d]:\t%d\n", i, diff_before[i]);
 	}
 	return diff_before;
 }
@@ -128,7 +148,7 @@ double * filter_noise(const int * diff_before)
 	}
 	
 	for(i = FILTER_WIND-1;i < realTimeLength-SLIDE_WIND+1;i++){
-		printf("%f\n", diff_after[i]);
+		printf("diff_after[%2d]:\t%f\n", i, diff_after[i]);
 	}
 	
 	return diff_after;
@@ -143,11 +163,11 @@ void judge_abnormal(int * abnormal, const double * diff_after)
 	int i;
 	for(i = 0;i < FILTER_WIND-1;i++){
 		abnormal[i] = 0;
-		printf("%d\n", abnormal[i]);
+		printf("abnormal[%2d]:\t%d\n", i, abnormal[i]);
 	}
 	for(i = FILTER_WIND-1;i < realTimeLength-SLIDE_WIND+1;i++){
 		abnormal[i] = diff_after[i] < DIFF_THRESHOLD ? 0 : 1;
-		printf("%d\n", abnormal[i]);
+		printf("abnormal[%2d]:\t%d\n", i, abnormal[i]);
 	}
 }
 
@@ -167,7 +187,7 @@ double * __compared_diff(const int * abnormal)
 		for(j = i-SLIDE_WIND+1;j <= i; j++)
 			vcom[i] += abnormal[j];
 		vcom[i] /= i+1-SLIDE_WIND+1;
-		printf("%f\n", vcom[i]);
+		printf("vcom[%2d]:\t%f\n", i, vcom[i]);
 	}
 
 	return vcom;
@@ -218,11 +238,11 @@ double * diff_density(const int * abnormal)
 
 	vden = (double *)calloc( (realTimeLength-SLIDE_WIND+1),
 		sizeof(double) );
-	printf("\n%f\n", vden[0]);
+	printf("\nvden[ 0]:\t%f\n", vden[0]);
 	for(i = 1;i < realTimeLength-SLIDE_WIND+1;i++){
 		if(abnormal[i] == 1)
 			vden[i] = 1.0 + vden[i-1];
-		printf("%f\n", vden[i]);
+		printf("vden[%2d]:\t%f\n", i, vden[i]);
 	}
 
 	return vden;

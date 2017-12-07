@@ -20,8 +20,8 @@
 //#define	REALTMSEQ_FILE	"real_time_sequence.txt"
 #define	REALTMSEQ_FILE	"test_sequence.txt"
 
-extern char normalSequence[SEQ_SIZE];		//正常序列
-extern char realTimeSequence[SEQ_SIZE];		//实时序列
+extern int normalSequence[SEQ_SIZE];		//正常序列
+extern int realTimeSequence[SEQ_SIZE];		//实时序列
 extern int normalLength;					//正常序列长度
 extern int realTimeLength;					//实时序列长度
 extern double * vcom;						//相对差异度向量

@@ -43,7 +43,6 @@ void syscall_create_info(int syscall, int return_status){
 		temp->uid = current_uid().val;
 		
 		memcpy(temp->comm, current->comm, COMM_SIZE);
-
 		if(++current_pos >= AUDIT_BUF_SIZE*8/10){
 			printk("In this module--audit: it's near full.\n");
 			wake_up_interruptible(&buffer_wait);
