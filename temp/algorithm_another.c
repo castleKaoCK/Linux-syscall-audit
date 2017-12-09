@@ -8,10 +8,6 @@ int normalLength = 0;						//正常序列长度
 int realTimeLength = 0;						//实时序列长度
 double * vcom = NULL;						//相对差异度向量
 double * vden = NULL;						//差异密度向量
-int * diff_before = NULL;					//加窗过滤前的差异度向量
-int * abnormal = NULL;						//异常序列标记向量
-double * diff_after = NULL;					//加窗过滤后的差异度向量
-
 
 
 
@@ -122,25 +118,26 @@ int i_to_B (const int * a, const int * b, const int n)
  *	求实时序列的所有短序列与正常序列的差异度。
  *	将结果放入diff_before,即加窗过滤前的差异度向量.
  */
-void A_to_B(void)
+int * A_to_B(void)
 {
 	int i;
-	diff_before = (int *)malloc( sizeof(int) * (realTimeLength-SLIDE_WIND+1) );
+	int * diff_before = (int *)malloc( sizeof(int) * (realTimeLength-SLIDE_WIND+1) );
 	for(i = 0;i < realTimeLength-SLIDE_WIND+1;++i){
 		diff_before[i] = i_to_B(realTimeSequence+i, normalSequence,
 			normalLength-SLIDE_WIND+1);
 		printf("diff_before[%2d]:\t%d\n", i, diff_before[i]);
 	}
+	return diff_before;
 }
 
 
 /*
  *	对得到的差异度向量进行加窗过滤噪声，将结果放入diff_after。
  */
-void filter_noise(const int * diff_before)
+double * filter_noise(const int * diff_before)
 {
 	int i, j;
-	
+	double * diff_after;
 	diff_after = (double *)calloc( (realTimeLength-SLIDE_WIND+1), 
 		sizeof(double) );
 	for(i = FILTER_WIND-1;i < realTimeLength-SLIDE_WIND+1;i++){
@@ -154,17 +151,18 @@ void filter_noise(const int * diff_before)
 		printf("diff_after[%2d]:\t%f\n", i, diff_after[i]);
 	}
 	
+	return diff_after;
 }
 
 
 /*
  *	将过滤后的差异度向量元素逐个与差异度阀值比较，结果用来断定异常序列。
  */
-void judge_abnormal(const double * diff_after)
+void judge_abnormal(int * abnormal, const double * diff_after)
 {
 	int i;
-	abnormal = (int *)calloc( (realTimeLength-SLIDE_WIND+1), sizeof(int));
 	for(i = 0;i < FILTER_WIND-1;i++){
+		abnormal[i] = 0;
 		printf("abnormal[%2d]:\t%d\n", i, abnormal[i]);
 	}
 	for(i = FILTER_WIND-1;i < realTimeLength-SLIDE_WIND+1;i++){
@@ -177,9 +175,10 @@ void judge_abnormal(const double * diff_after)
 /*
  *	实际求解相对差异度的算法，vcom为相对差异度向量。
  */
-void __compared_diff(const int * abnormal)
+double * __compared_diff(const int * abnormal)
 {
 	int i, j;
+	double * vcom;
 
 	vcom = (double *)calloc( (realTimeLength-SLIDE_WIND+1),
 		sizeof(double) );
@@ -191,46 +190,51 @@ void __compared_diff(const int * abnormal)
 		printf("vcom[%2d]:\t%f\n", i, vcom[i]);
 	}
 
+	return vcom;
 }
 
 /*
  *	求解相对差异度。步骤写于函数注释中。
  */
-void compared_diff(void)
+int * compared_diff(void)
 {
+	int * diff_before, * abnormal;
+	double * diff_after;
 	
 /*
  *	得到实时序列各个子序列差异度
  */
 	
-	A_to_B();	//diff_before申请空间
+	diff_before = A_to_B();
 /*
  *	加窗过滤噪声,diff_after为过滤后的差异度
  */
-	filter_noise(diff_before);	//diff_after申请空间
+	diff_after = filter_noise(diff_before);
 
 /*
  *	对比预设差异度门限值，确定是否为异常序列。是为1,否则为0.
  */
 
-	judge_abnormal(diff_after);	//abnormal申请空间
+	abnormal = diff_before;
+	judge_abnormal(abnormal, diff_after);
 
 /*
  *	求得相对差异度.
  */
-	//free(diff_after);
-	__compared_diff(abnormal);	//vcom申请空间
+	free(diff_after);
+	vcom = __compared_diff(abnormal);
 
-	return;
+	return abnormal;
 }
 
 
 /*
  *	求差异密度。将结果放于vden，即差异密度向量。
  */
-void diff_density(const int * abnormal)
+double * diff_density(const int * abnormal)
 {
 	int i;
+	double * vden;
 
 	vden = (double *)calloc( (realTimeLength-SLIDE_WIND+1),
 		sizeof(double) );
@@ -241,6 +245,7 @@ void diff_density(const int * abnormal)
 		printf("vden[%2d]:\t%f\n", i, vden[i]);
 	}
 
+	return vden;
 }
 
 /*
@@ -288,16 +293,17 @@ int __judge_process(void)
  */
 int judge_process()
 {
+	int * abnormal;
 /*
  *	求得相对差异度向量，并返回异常序列标记向量。
  */
-	compared_diff();
+	abnormal = compared_diff();
 /*
  *	求得差异密度，并返回差异密度向量。
  */
-	diff_density(abnormal);	//vden申请空间
+	vden = diff_density(abnormal);
 
-	//free(abnormal);		//异常序列标记向量已经无用.
+	free(abnormal);		//异常序列标记向量已经无用.
 
 	return __judge_process();	//返回判断结果
 }

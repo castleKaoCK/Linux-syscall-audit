@@ -26,9 +26,9 @@ extern int normalLength;					//正常序列长度
 extern int realTimeLength;					//实时序列长度
 extern double * vcom;						//相对差异度向量
 extern double * vden;						//差异密度向量
-extern int * diff_before;					//加窗过滤前的差异度向量
-extern int * abnormal;						//异常序列标记向量
-extern double * diff_after;					//加窗过滤后的差异度向量
+//extern int * diff_before;					//加窗过滤前的差异度向量
+//extern int * abnormal;						//异常序列标记向量
+//extern double * diff_after;					//加窗过滤后的差异度向量
 
 void init_sequence(void);										//初始化两个序列
 int judge_process(void);										//断定异常程序

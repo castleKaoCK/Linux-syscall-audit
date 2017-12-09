@@ -14,6 +14,9 @@ int main(void){
 		printf("WARNING:This is one abnormal syscall sequence!\n");
 	free(vcom);
 	free(vden);
-	
+	free(diff_before);
+	free(abnormal);
+	free(diff_after);
+
 	return 0;
 }
