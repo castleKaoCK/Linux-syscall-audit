@@ -8,7 +8,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define	SEQ_SIZE	100				//序列长度
+#define	SEQ_SIZE	10				//序列长度
 #define	SLIDE_WIND	6				//滑动窗口大小
 #define	FILTER_WIND	SLIDE_WIND		//过滤窗口大小，不能小于滑动窗口大小
 #define	DIFF_THRESHOLD	1.00000	//差异度门限值
@@ -20,15 +20,17 @@
 //#define	REALTMSEQ_FILE	"real_time_sequence.txt"
 #define	REALTMSEQ_FILE	"test_sequence.txt"
 
-extern int normalSequence[SEQ_SIZE];		//正常序列
-extern int realTimeSequence[SEQ_SIZE];		//实时序列
+extern char first_time_run;					//（或扩容）首次运行标志
+extern int expland_time;					//动态扩容次数
+extern int normalSequence[SEQ_SIZE*500];	//正常序列
 extern int normalLength;					//正常序列长度
 extern int realTimeLength;					//实时序列长度
-extern double * vcom;						//相对差异度向量
-extern double * vden;						//差异密度向量
+extern int * realTimeSequence;				//实时序列
 extern int * diff_before;					//加窗过滤前的差异度向量
 extern int * abnormal;						//异常序列标记向量
 extern double * diff_after;					//加窗过滤后的差异度向量
+extern double * vcom;						//相对差异度向量
+extern double * vden;						//差异密度向量
 
 void init_sequence(void);										//初始化两个序列
 int judge_process(void);										//断定异常程序
