@@ -15,6 +15,7 @@ typedef unsigned int 	u32;
 
 
 #include "common.h"
+#include "algorithm.h"
 
 static int exit_flag = 0;
 
@@ -27,15 +28,21 @@ int main(int argc, char *argv[])
 	unsigned char reset = 1;
 	int num = 0;
 	int i, fd;
+	char mode;
 
 	if(argc < 2){
 		perror("at least 2 parameter");
 		exit(EXIT_FAILURE);
 	}
-		
+	if( strcmp(argv[1], "normal") && strcmp(argv[1], "test")){
+		perror("parameter is wrong");
+		exit(EXIT_FAILURE);
+	}
+	mode = strcmp(argv[1], "normal") == 0? WRNORM : TEST;
 
 	signal(SIGINT, handle_int);
-	if(strcmp(argv[1], "normal") == 0)	//此次运行为录入正常序列库
+	
+	if(mode == WRNORM)	//此次运行为录入正常序列库,打开文件
 	{
 		fd = open("temp/normal_sequence.txt", O_WRONLY, 0000);
 		if(fd == -1){
@@ -43,6 +50,8 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
+	else				//此次运行为检测程序，载入正常序列库
+		init_sequence();
 
 	while(1)
 	{
@@ -58,16 +67,20 @@ int main(int argc, char *argv[])
 			printf("uid:%d\n", audit_buf[i].uid);
 			printf("comm:%s\n", audit_buf[i].comm);
 	
-			if(strcmp(argv[1], "normal") == 0)
+			if(mode == WRNORM)
 				write_normal(fd, audit_buf[i].syscall);
+			else
+				judge_process(audit_buf[i].syscall, audit_buf[i].pid);
 		}
 
 		if(exit_flag)
 		{
-			if(strcmp(argv[1], "normal") == 0){	//此次运行为录入正常序列库
+			if(mode == WRNORM){	//此次运行为录入正常序列库
 				write(fd, '\0', 1);
 				close(fd);
 			}
+			else
+				free_all();		//此次运行为检测程序
 			exit(EXIT_SUCCESS);
 		}
 	}
