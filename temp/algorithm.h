@@ -8,7 +8,8 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define	SEQ_SIZE	10				//序列长度
+#define	SEQ_SIZE	20				//序列块长度
+#define	MAX_EXP_TIME	500			//最多扩容次数
 #define	SLIDE_WIND	6				//滑动窗口大小
 #define	FILTER_WIND	SLIDE_WIND		//过滤窗口大小，不能小于滑动窗口大小
 #define	DIFF_THRESHOLD	1.00000	//差异度门限值
@@ -33,6 +34,7 @@ extern double * vcom;						//相对差异度向量
 extern double * vden;						//差异密度向量
 
 void init_sequence(void);										//初始化两个序列
-int judge_process(void);										//断定异常程序
+void judge_process(const int );									//断定异常程序
+void free_all(void);											//释放所有动态申请的空间
 
 #endif	//_ALGORITHM_H

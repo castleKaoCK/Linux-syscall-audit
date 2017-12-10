@@ -2,7 +2,7 @@
 #define	_COMMON_H
 
 #define	COMM_SIZE	32
-#define	AUDIT_BUF_SIZE	5
+#define	AUDIT_BUF_SIZE	10
 
 struct syscall_buf{
 	u32		serial;

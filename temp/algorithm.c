@@ -1,17 +1,17 @@
 #include "algorithm.h"
 
 
-char first_time_run = 1;					//（或扩容）首次运行标志
-int expland_time = 0;						//动态扩容次数
-int normalSequence[SEQ_SIZE*500] = {0};		//正常序列
-int normalLength = 0;						//正常序列长度
-int realTimeLength = 0;						//实时序列长度
-int * realTimeSequence = NULL;				//实时序列
-int * diff_before = NULL;					//加窗过滤前的差异度向量
-int * abnormal = NULL;						//异常序列标记向量
-double * diff_after = NULL;					//加窗过滤后的差异度向量
-double * vcom = NULL;						//相对差异度向量
-double * vden = NULL;						//差异密度向量
+char first_time_run = 1;						//（或扩容）首次运行标志
+int expland_time = 0;							//动态扩容次数
+int normalSequence[SEQ_SIZE*MAX_EXP_TIME] = {0};//正常序列
+int normalLength = 0;							//正常序列长度
+int realTimeLength = 0;							//实时序列长度
+int * realTimeSequence = NULL;					//实时序列
+int * diff_before = NULL;						//加窗过滤前的差异度向量
+int * abnormal = NULL;							//异常序列标记向量
+double * diff_after = NULL;						//加窗过滤后的差异度向量
+double * vcom = NULL;							//相对差异度向量
+double * vden = NULL;							//差异密度向量
 
 
 
@@ -22,7 +22,7 @@ int ch_to_int(const char * ch, int * arr)
 {
 	int i = 0, length = 0, num = -1;
 	
-	for(;i < SEQ_SIZE*500;++i)
+	for(;i < SEQ_SIZE * MAX_EXP_TIME;++i)
 	{
 		if(ch[i] == ' ' || ch[i] == '\0' || ch[i] == '\n')
 		{
@@ -52,7 +52,7 @@ void init_sequence(void)
 	int i;
 	int fd;
 	int rt_val;
-	char normalSequenceChar[SEQ_SIZE*500] = {0};		//正常序列
+	char normalSequenceChar[SEQ_SIZE * MAX_EXP_TIME] = {0};		//正常序列
 	//char realTimeSequenceChar[SEQ_SIZE] = {0};		//实时序列
 
 	fd = open(NORMALSEQ_FILE, O_RDONLY, 0000);
@@ -61,7 +61,7 @@ void init_sequence(void)
 		exit(EXIT_FAILURE);
 	}
 
-	rt_val = read(fd, normalSequenceChar, SEQ_SIZE*500);
+	rt_val = read(fd, normalSequenceChar, SEQ_SIZE * MAX_EXP_TIME);
 	if(rt_val == -1){
 		perror("read failed");
 		exit(EXIT_FAILURE);
@@ -179,6 +179,9 @@ void filter_noise(const int * diff_before)
 		if(diff_after == NULL)	//首次运行程序
 		{
 			diff_after = temp;
+			for(i = 0;i < FILTER_WIND-1;i++)
+				printf("diff_after[%d]:\t%f\n", i, diff_after[i]);		
+			
 			for(i = FILTER_WIND-1;i < realTimeLength-SLIDE_WIND+1;i++)
 			{
 				for(j = i-FILTER_WIND+1;j <= i;j++)
@@ -388,7 +391,7 @@ void diff_density(const int * abnormal)
  *	程度，若高于阀值的成员偏离程度大于低于阀值的成员，则认定为异常程序。
  *	否则认定为正常程序。
  */
-int __judge_process(void)
+int __judge_process_each_time(void)
 {
 	int i;
 	double vec, ved;
@@ -452,7 +455,7 @@ int __judge_process(void)
 /*
  *	断定异常程序。执行步骤写于函数注释中。
  */
-int judge_process()
+int judge_process_each_time()
 {
 /*
  *	求得相对差异度向量，并返回异常序列标记向量。
@@ -465,5 +468,52 @@ int judge_process()
 
 	//free(abnormal);		//异常序列标记向量已经无用.
 
-	return __judge_process();	//返回判断结果
+	return __judge_process_each_time();	//返回判断结果
+}
+
+void judge_process(const int input)
+{
+	int i;
+	int * temp;
+
+	if(realTimeLength + 1 > SEQ_SIZE * expland_time){
+		++expland_time;
+		first_time_run = 1;
+		temp = (int *)malloc(sizeof(int) * SEQ_SIZE * expland_time);
+		if(realTimeSequence != NULL){
+			for(i = 0;i < realTimeLength;i++)
+				temp[i] = realTimeSequence[i];
+			free(realTimeSequence);
+		}
+		realTimeSequence = temp;
+	}
+	else
+		first_time_run = 0;
+
+	realTimeSequence[realTimeLength++] = input;
+
+	if(normalLength < SLIDE_WIND+FILTER_WIND-1 || realTimeLength < SLIDE_WIND+FILTER_WIND-1){
+		printf("normalLength or realTimeLength is not long enough\n");
+		return ;
+	}
+	else if(vcom == NULL)
+		first_time_run = 1;
+
+	
+	if(judge_process_each_time() != ABNORMAL)
+		printf("\tCongratulations!\tThis is one normal syscall sequence!\n");
+	else{
+		printf("WARNING:This is one abnormal syscall sequence!\n");
+		exit(EXIT_SUCCESS);
+	}
+}
+
+void free_all()
+{
+	free(realTimeSequence);
+	free(vcom);
+	free(vden);
+	free(diff_before);
+	free(abnormal);
+	free(diff_after);
 }
