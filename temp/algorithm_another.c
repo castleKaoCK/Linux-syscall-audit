@@ -19,7 +19,7 @@ int ch_to_int(const char * ch, int * arr)
 	
 	for(;i < SEQ_SIZE;++i)
 	{
-		if(ch[i] == ' ' || ch[i] == '\0' || ch[i] == '\n')
+		if(ch[i] == ' ' || ch[i] == '\0')// || ch[i] == '\n')
 		{
 			arr[length] = num != -1? num: arr[length];
 			length += num != -1? 1: 0;
@@ -27,7 +27,7 @@ int ch_to_int(const char * ch, int * arr)
 				break;
 			num = -1;
 		}
-		else
+		else if(ch[i] >= '0' && ch[i] <= '9')
 		{
 			if(num == -1)
 				num = ch[i] - '0';
@@ -81,10 +81,10 @@ void init_sequence(void)
 	
 	for(i = 0;i < normalLength;i++)
 		printf("%d ", normalSequence[i]);
-	printf("\n");
+	printf("\nnormalLength:%d\n", normalLength);
 	for(i = 0;i < realTimeLength;i++)
 		printf("%d ", realTimeSequence[i]);
-	printf("\n");
+	printf("\nrealTimeLength:%d\n", realTimeLength);
 }
 
 

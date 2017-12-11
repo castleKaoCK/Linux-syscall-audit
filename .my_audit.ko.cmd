@@ -1,1 +1,0 @@
-cmd_/home/castlekao/audit/my_audit.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/castlekao/audit/my_audit.ko /home/castlekao/audit/my_audit.o /home/castlekao/audit/my_audit.mod.o

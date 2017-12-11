@@ -18,7 +18,7 @@
 #define	TDEN		8				//差异密度阀值
 #define	ABNORMAL	1
 #define	NORMAL		0
-#define	NORMALSEQ_FILE	"temp/normal_sequence.txt"
+#define	NORMALSEQ_FILE	"temp/real_time_sequence.txt"
 //#define	REALTMSEQ_FILE	"real_time_sequence.txt"
 #define	REALTMSEQ_FILE	"test_sequence.txt"
 

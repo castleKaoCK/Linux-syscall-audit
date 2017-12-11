@@ -8,17 +8,17 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define	SEQ_SIZE	100				//序列长度
+#define	SEQ_SIZE	5000			//序列长度
 #define	SLIDE_WIND	6				//滑动窗口大小
 #define	FILTER_WIND	SLIDE_WIND		//过滤窗口大小，不能小于滑动窗口大小
-#define	DIFF_THRESHOLD	1.00000	//差异度门限值
-#define	TCOM		0.08			//相对差异度阀值
+#define	DIFF_THRESHOLD	4.40000		//差异度门限值
+#define	TCOM		0.026			//相对差异度阀值
 #define	TDEN		8				//差异密度阀值
 #define	ABNORMAL	1
 #define	NORMAL		0
-#define	NORMALSEQ_FILE	"normal_sequence.txt"
+#define	NORMALSEQ_FILE	"bounce-2.int"
 //#define	REALTMSEQ_FILE	"real_time_sequence.txt"
-#define	REALTMSEQ_FILE	"test_sequence.txt"
+#define	REALTMSEQ_FILE	"bounce-1.int"
 
 extern int normalSequence[SEQ_SIZE];		//正常序列
 extern int realTimeSequence[SEQ_SIZE];		//实时序列

@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	
 	if(mode == WRNORM)	//此次运行为录入正常序列库,打开文件
 	{
-		fd = open("temp/normal_sequence.txt", O_WRONLY, 0000);
+		fd = open(NORMALSEQ_FILE, O_WRONLY, 0000);
 		if(fd == -1){
 			perror("open failed");
 			exit(EXIT_FAILURE);

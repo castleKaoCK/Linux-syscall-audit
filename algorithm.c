@@ -32,7 +32,7 @@ int ch_to_int(const char * ch, int * arr)
 				break;
 			num = -1;
 		}
-		else
+		else if(ch[i] >= '0' && ch[i] <= '9')
 		{
 			if(num == -1)
 				num = ch[i] - '0';
